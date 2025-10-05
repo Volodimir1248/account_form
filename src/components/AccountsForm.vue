@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onMounted, reactive, ref, computed } from 'vue';
+import { nextTick, onMounted, reactive, ref } from 'vue';
 import { ElMessage } from 'element-plus';
 import type { FormInstance, FormRules } from 'element-plus';
 import { Plus, Delete } from '@element-plus/icons-vue';
@@ -10,11 +10,12 @@ import {
   ACCOUNT_TYPE_OPTIONS,
   LOGIN_MAX_LENGTH,
   LABEL_MAX_LENGTH,
+  PASSWORD_MAX_LENGTH,
   createEmptyRow,
   ensurePasswordForType,
   fromAccount,
-  isLdap,
   toAccount,
+  isLdap,
 } from '../utils/account';
 
 const store = useAccountsStore();
@@ -23,7 +24,6 @@ const rows = reactive<AccountRowModel[]>([]);
 const formRefs = ref<FormInstance[]>([]);
 
 const typeOptions = ACCOUNT_TYPE_OPTIONS;
-const hasMultipleRows = computed(() => rows.length > 1);
 
 function registerFormRef(index: number) {
   return (instance: FormInstance | null) => {
@@ -68,8 +68,8 @@ function createValidationRules(row: AccountRowModel): FormRules {
               return;
             }
 
-            if (String(value).length > LOGIN_MAX_LENGTH) {
-              callback(new Error(`Максимум ${LOGIN_MAX_LENGTH} символов`));
+            if (String(value).length > PASSWORD_MAX_LENGTH) {
+              callback(new Error(`Максимум ${PASSWORD_MAX_LENGTH} символов`));
               return;
             }
           }
@@ -104,11 +104,11 @@ function removeRow(index: number) {
   const row = rows[index];
   if (!row) return;
 
-  const rowId = row.id;
+  const rowTs = row.ts;
   rows.splice(index, 1);
   formRefs.value.splice(index, 1);
 
-  store.remove(rowId);
+  store.remove(rowTs);
 }
 
 function handleTypeChange(index: number) {
@@ -120,7 +120,7 @@ function handleTypeChange(index: number) {
 }
 
 function initializeRows() {
-  const storedAccounts = store.ensureAllHaveIds();
+  const storedAccounts = store.accounts;
 
   if (storedAccounts.length) {
     const restored = storedAccounts.map((acc) => fromAccount(acc));
@@ -170,7 +170,7 @@ onMounted(() => {
       <div class="table-body">
         <el-form
           v-for="(row, idx) in rows"
-          :key="row.id"
+          :key="row.ts"
           :model="row"
           :rules="createValidationRules(row)"
           status-icon
@@ -181,7 +181,6 @@ onMounted(() => {
           <div class="table-row__header">
             <span class="table-row__title">Запись №{{ idx + 1 }}</span>
             <el-button
-              v-if="hasMultipleRows"
               type="danger"
               circle
               :icon="Delete"

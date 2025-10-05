@@ -1,50 +1,29 @@
 import { defineStore } from 'pinia';
-import type { Account, AccountId, AccountLike } from '../types';
-import { ensureAccountHasId } from '../utils/account';
+import type { Account, AccountTs } from '../types';
 
 export const useAccountsStore = defineStore('accounts', {
   state: () => ({
-    accounts: [] as (AccountLike | null)[],
+    accounts: [] as Account[],
   }),
   actions: {
-    ensureAllHaveIds(): Account[] {
-      const normalized = this.accounts
-        .filter((account): account is AccountLike => account != null)
-        .map((account) => ensureAccountHasId(account));
-
-      if (
-        normalized.length !== this.accounts.length ||
-        normalized.some((account, index) => account !== this.accounts[index])
-      ) {
-        this.accounts = normalized;
-      }
-
-      return normalized;
-    },
-    setAll(next: AccountLike[]) {
-      this.accounts = next.map((account) => ensureAccountHasId(account));
-    },
-    save(account: AccountLike) {
-      const existing = this.ensureAllHaveIds();
-      const normalized = ensureAccountHasId(account);
-      const index = existing.findIndex((item) => item.id === normalized.id);
+    save(account: Account) {
+      const index = this.accounts.findIndex((item) => item.ts === account.ts);
 
       if (index >= 0) {
-        const next = existing.slice();
-        next[index] = normalized;
+        const next = this.accounts.slice();
+        next[index] = account;
 
         this.accounts = next;
         return;
       }
 
-      this.accounts = [...existing, normalized];
+      this.accounts = [...this.accounts, account];
     },
-    remove(id: AccountId) {
-      const existing = this.ensureAllHaveIds();
-      const next = existing.filter((account) => account.id !== id);
+    remove(ts: AccountTs) {
+      const filteredAccounts = this.accounts.filter((account) => account.ts !== ts);
 
-      if (next.length !== existing.length) {
-        this.accounts = next;
+      if (filteredAccounts.length !== this.accounts.length) {
+        this.accounts = filteredAccounts;
       }
     },
   },

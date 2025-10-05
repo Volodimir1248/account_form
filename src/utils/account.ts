@@ -1,33 +1,13 @@
-import type {
-  Account,
-  AccountId,
-  AccountLike,
-  AccountRowModel,
-  AccountType,
-  LabelObj,
-} from '../types';
+import type { Account, AccountTs, AccountRowModel, AccountType, LabelObj } from '../types';
 
 export const ACCOUNT_TYPE_OPTIONS: AccountType[] = ['Локальная', 'LDAP'];
 export const LABEL_SEPARATOR = ';';
 export const LABEL_MAX_LENGTH = 50;
 export const LOGIN_MAX_LENGTH = 100;
+export const PASSWORD_MAX_LENGTH = 100;
 
-let accountIdCounter = 0;
-
-export function createAccountId(): AccountId {
-  accountIdCounter += 1;
-  return `acc-${Date.now()}-${accountIdCounter}`;
-}
-
-export function ensureAccountHasId(account: AccountLike): Account {
-  if (account.id) {
-    return account as Account;
-  }
-
-  return {
-    ...account,
-    id: createAccountId(),
-  };
+export function createAccountTs(): AccountTs {
+  return `${Date.now()}`;
 }
 
 export function parseLabelsInput(input: string): LabelObj[] {
@@ -39,34 +19,32 @@ export function parseLabelsInput(input: string): LabelObj[] {
 }
 
 export function formatLabels(labels: LabelObj[]): string {
-  return labels.map((label) => label.text).join(`${LABEL_SEPARATOR} `);
+  return labels.map((label) => label.text).join(`${LABEL_SEPARATOR}`);
 }
 
 export function toAccount(row: AccountRowModel): Account {
   return {
-    id: row.id,
+    ts: row.ts,
     labels: parseLabelsInput(row.labelsInput),
     type: row.type,
     login: row.login,
-    password: row.type === 'LDAP' ? null : row.password ?? '',
+    password: ensurePasswordForType(row.type, row.password),
   };
 }
 
-export function fromAccount(account: AccountLike): AccountRowModel {
-  const normalized = ensureAccountHasId(account);
-
+export function fromAccount(account: Account): AccountRowModel {
   return {
-    id: normalized.id,
-    labelsInput: formatLabels(normalized.labels),
-    type: normalized.type,
-    login: normalized.login,
-    password: normalized.password ?? null,
+    ts: account.ts,
+    labelsInput: formatLabels(account.labels),
+    type: account.type,
+    login: account.login,
+    password: ensurePasswordForType(account.type, account.password),
   };
 }
 
 export function createEmptyRow(): AccountRowModel {
   return {
-    id: createAccountId(),
+    ts: createAccountTs(),
     labelsInput: '',
     type: 'Локальная',
     login: '',

@@ -1,25 +1,20 @@
 export type AccountType = 'LDAP' | 'Локальная';
-export type AccountId = string;
+export type AccountTs = string;
 
 export interface LabelObj {
   text: string;
 }
 
-export interface AccountAttributes {
+export interface Account {
+  ts: AccountTs;
   labels: LabelObj[];
   type: AccountType;
   login: string;
   password: string | null;
 }
 
-export interface Account extends AccountAttributes {
-  id: AccountId;
-}
-
-export type AccountLike = AccountAttributes & { id?: AccountId };
-
 export interface AccountRowModel {
-  id: AccountId;
+  ts: AccountTs;
   labelsInput: string;
   type: AccountType;
   login: string;
